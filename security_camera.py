@@ -1,7 +1,12 @@
 import subprocess
 import time
+from datetime import datetime
 
 def record_video(duration):
+	# Current time to create unique filename
+	current_time = datetime.now().strftime("%Y%m%d%H%M%S")
+	filename = f'/home/wazza/Videos/video_{current_time}.h264'
+	
 	# Start recording using libcamera-vid
 	command = [
 	'libcamera-vid',
