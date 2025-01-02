@@ -1,13 +1,14 @@
 import subprocess
 import time
 import boto3
+import os
 from datetime import datetime
 
 def record_video(duration):
 	# Current time to create unique filename
 	current_time = datetime.now().strftime("%Y%m%d%H%M%S")
 	filename = f'/home/wazza/Videos/video_{current_time}.h264'
-	filepath = f'/home/pi/Videos/{filename}'
+	filepath = f'{filename}'
 	
 	# Start recording using libcamera-vid
 	command = [
@@ -24,7 +25,16 @@ def record_video(duration):
 	subprocess.Popen(command).wait()
 	print("Video recording stopped...")
 	
-	upload_to_s3(filepath, filename)
+	# .h264 to .mp4
+	mp4_filename = filepath.replace('.h264', '.mp4')
+	convert_command = f"ffmpeg -i {filepath} -c:v copy -movflags +faststart {mp4_filename}"
+	result = subprocess.run(convert_command, shell=True, capture_output=True, text=True)
+	
+	if result.returncode != 0:
+		print("Error during conversion:", result.stderr)
+	else:
+		print(f"Conversion sucessful: {mp4_filename}")
+		upload_to_s3(mp4_filename, os.path.basename(mp4_filename))
 	
 def upload_to_s3(file_path, file_name):
 	# Create an S3 client
